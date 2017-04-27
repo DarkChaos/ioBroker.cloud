@@ -1130,7 +1130,25 @@ function connect() {
         detectDisconnect = null;
     });
 
-    var server = 'http://localhost:8082';
+    //var server = 'https://localhost:8082';
+    // copy code from below to prevent Error 501 if web instance is on https
+    if (adapter.config.instance) {
+        if (adapter.config.instance.substring(0, 'system.adapter.'.length) !== 'system.adapter.') {
+            adapter.config.instance = 'system.adapter.' + adapter.config.instance;
+        }
+
+        adapter.getForeignObject(adapter.config.instance, function (err, obj) {
+            if (obj) {
+                var server = 'http' + (obj.native.secure ? 's' : '') + '://';
+                // todo if run on other host
+                server += (!obj.native.bind || obj.native.bind === '0.0.0.0') ? '127.0.0.1' : obj.native.bind;
+                server += ':' + obj.native.port;
+            } else {
+                adapter.log.error('Unknown instance ' + adapter.log.instance);
+                throw new Error('Unknown instance ' + adapter.log.instance);
+            }
+        });
+    }
     socket.on('html', function (url, cb) {
         request({url: server + url, encoding: null}, function (error, response, body) {
             cb(error, response ? response.statusCode : 501, response ? response.headers : [], body);
@@ -1667,10 +1685,10 @@ function connect() {
 
         adapter.getForeignObject(adapter.config.instance, function (err, obj) {
             if (obj) {
-                server = 'http' + (obj.native.secure ? 's' : '')  + '://';
-                // todo if run on other host
-                server += (!obj.native.bind || obj.native.bind === '0.0.0.0') ? '127.0.0.1' : obj.native.bind;
-                server += ':' + obj.native.port;
+                //server = 'http' + (obj.native.secure ? 's' : '')  + '://';
+                //// todo if run on other host
+                //server += (!obj.native.bind || obj.native.bind === '0.0.0.0') ? '127.0.0.1' : obj.native.bind;
+                //server += ':' + obj.native.port;
 
                 ioSocket = new IOSocket(socket, {clientid: adapter.config.apikey}, adapter);
             } else {
